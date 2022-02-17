@@ -30,7 +30,7 @@ aks_service_address_range='10.100.0.0/24'
 aks_dns_service_ip='10.100.0.10'
 
 # AML details
-workspace1='aml-moetest'
+workspace_name='aml-moetest'
 aml_subnet_address_range='10.0.1.0/24'
 
 # AML deployment name
@@ -49,7 +49,7 @@ aks_subnet_id=`az network vnet subnet show -g $rg -n aks --vnet-name $vnet_name 
 
 ## Create workspace
 
-This repo assumes the workspace is already here and is named `$workspace1`
+This repo assumes the workspace is already here and is named `$workspace_name`
 
 ## Create jumphost VM/Compute Instance in aml-subnet
 
@@ -80,10 +80,6 @@ vnet_id=`az network vnet show -g $rg -n $vnet_name --query 'id' | sed 's/\"//g'`
 az role assignment create --assignee-object-id $aks_object_id --role "Network Contributor" --scope $vnet_id
 ```
 
-
-## is this needed? 
-kubectl apply -f aks/internal-lb.yml
-
 # Install AML AKS extension on AKS cluster
 
 ```console
@@ -97,12 +93,12 @@ az k8s-extension show --name arcml-inference --cluster-type managedClusters --cl
 
 ```console
 aks_id=`az aks show -g $rg -n $aks_cluster_name --query 'id' | sed 's/\"//g'`
-az ml compute attach -g $rg -w $workspace1 -n $aks_cluster_name -t Kubernetes --resource-id $aks_id --namespace $workspace1
+az ml compute attach -g $rg -w $workspace_name -n $aks_cluster_name -t Kubernetes --resource-id $aks_id --namespace $workspace_name
 ```
 
 # Create endpoints and deployments using yml files
 
 ```console
-az ml online-endpoint create -g $rg -w $workspace1 -n $endpoint -f endpoint/endpoint.yml
-az ml online-deployment create --name deployment --endpoint $endpoint -f endpoint/deployment.yml --all-traffic -g $rg -w $workspace1
+az ml online-endpoint create -g $rg -w $workspace_name -n $endpoint -f endpoint/endpoint.yml
+az ml online-deployment create --name deployment --endpoint $endpoint -f endpoint/deployment.yml --all-traffic -g $rg -w $workspace_name
 ```
