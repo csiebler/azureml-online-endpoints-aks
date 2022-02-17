@@ -1,0 +1,7 @@
+name: model-endpoint
+compute: azureml:aks-dev
+description: Managed Online Endpoint test
+tags:
+  foo: Just a sample tag
+properties:
+  bar: Just a sample property
