@@ -80,7 +80,7 @@ vnet_id=`az network vnet show -g $rg -n $vnet_name --query 'id' | sed 's/\"//g'`
 az role assignment create --assignee-object-id $aks_object_id --role "Network Contributor" --scope $vnet_id
 ```
 
-# Install AML AKS extension on AKS cluster
+## Install AML AKS extension on AKS cluster
 
 ```console
 az feature register --namespace Microsoft.ContainerService -n AKS-ExtensionManager
@@ -89,16 +89,25 @@ az k8s-extension create --name arcml-inference --extension-type Microsoft.AzureM
 az k8s-extension show --name arcml-inference --cluster-type managedClusters --cluster-name $aks_cluster_name --resource-group $rg
 ```
 
-# Attach cluster to workspace
+## Attach cluster to workspace
 
 ```console
 aks_id=`az aks show -g $rg -n $aks_cluster_name --query 'id' | sed 's/\"//g'`
 az ml compute attach -g $rg -w $workspace_name -n $aks_cluster_name -t Kubernetes --resource-id $aks_id --namespace $workspace_name
 ```
 
-# Create endpoints and deployments using yml files
+## Create endpoints and deployments using yml files
+
+Create Online Endpoint:
 
 ```console
 az ml online-endpoint create -g $rg -w $workspace_name -n $endpoint -f endpoint/endpoint.yml
+```
+
+Here, we can now optionally add the Managed Identity of the Online Endpoint and add it as a `Storage Blob Data Contributer` to the Workspace's storage account (or whichever storage account it should write to). This will allow us to have our deployed model access storage (or other Azure services) without using any credentials, but rather relying on the identity of the endpoint.
+
+Now deploy the model to the Online Endpoint:
+
+```console
 az ml online-deployment create --name deployment --endpoint $endpoint -f endpoint/deployment.yml --all-traffic -g $rg -w $workspace_name
 ```
