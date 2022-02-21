@@ -45,7 +45,7 @@ az group create -l westeurope -n $rg
 az network vnet create -g $rg -n $vnet_name --address-prefix $vnet_address_range
 az network vnet subnet create -g $rg --vnet-name $vnet_name -n aml --address-prefixes $aml_subnet_address_range
 az network vnet subnet create -g $rg --vnet-name $vnet_name -n aks --address-prefixes $aks_subnet_address_range
-aks_subnet_id=`az network vnet subnet show -g $rg -n aks --vnet-name $vnet_name --query 'id' | sed 's/\"//g'`
+aks_subnet_id=`az network vnet subnet show -g $rg -n aks --vnet-name $vnet_name | jq .id -r`
 ```
 
 ## Create workspace
@@ -74,8 +74,8 @@ az aks get-credentials --resource-group $rg --name $aks_cluster_name --overwrite
 ## Make sure AKS MI has network contributor rights on Network in which internal load balancer is deployed
 
 ```console
-aks_object_id=`az aks show -g $rg -n $aks_cluster_name --query 'identity.principalId' | sed 's/\"//g'`
-vnet_id=`az network vnet show -g $rg -n $vnet_name --query 'id' | sed 's/\"//g'`
+aks_object_id=`az aks show -g $rg -n $aks_cluster_name | jq .identity.principalId -r`
+vnet_id=`az network vnet show -g $rg -n $vnet_name | jq .id -r`
 az role assignment create --assignee-object-id $aks_object_id --role "Network Contributor" --scope $vnet_id
 ```
 
@@ -91,7 +91,7 @@ az k8s-extension show --name arcml-inference --cluster-type managedClusters --cl
 ## Attach cluster to workspace
 
 ```console
-aks_id=`az aks show -g $rg -n $aks_cluster_name --query 'id' | sed 's/\"//g'`
+aks_id=`az aks show -g $rg -n $aks_cluster_name | jq .id -r`
 az ml compute attach -g $rg -w $workspace_name -n $aks_cluster_name -t Kubernetes --resource-id $aks_id --namespace $workspace_name
 ```
 
