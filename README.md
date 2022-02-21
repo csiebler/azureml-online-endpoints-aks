@@ -5,6 +5,7 @@ This repo shows how to deploy models to AKS using Azure Machine Learning Online 
 ## Install extensions
 
 ```console
+az extension remove -n azure-cli-ml
 az extension add --name ml
 az extension add --name connectedk8s
 az extension add --name k8s-extension
@@ -51,10 +52,6 @@ aks_subnet_id=`az network vnet subnet show -g $rg -n aks --vnet-name $vnet_name 
 
 This repo assumes the workspace is already here and is named `$workspace_name`
 
-## Create jumphost VM/Compute Instance in aml-subnet
-
-Not covered in this repo right now...and potentially not needed (needs to be validated).
-
 ## Make sure public access is enabled for your AzureML workspace
 
 Allow public access to workspace via this Python snippet, or alternatively just change the setting under the Networking tab on your AML Workspace:
@@ -64,6 +61,8 @@ from azureml.core import Workspace
 ws = Workspace(subscription_id='...', resource_group='...', workspace_name='...')
 ws.update(allow_public_access_when_behind_vnet=True)
 ```
+
+If you prefer a private workspace, make sure to execute all commands from within the VNET!
 
 ## Create AKS cluster
 
@@ -104,9 +103,14 @@ Create Online Endpoint:
 az ml online-endpoint create -g $rg -w $workspace_name -n $endpoint -f endpoint/endpoint.yml
 ```
 
-Here, we can now optionally add the Managed Identity of the Online Endpoint and add it as a `Storage Blob Data Contributer` to the Workspace's storage account (or whichever storage account it should write to). This will allow us to have our deployed model access storage (or other Azure services) without using any credentials, but rather relying on the identity of the endpoint.
+Here, we can now optionally add the Managed Identity of the Online Endpoint and give it `Storage Blob Data Contributer` IAM permission for a storage account (e.g., the workspace's default account). This will allow us to have our deployed model access storage (or other Azure services) without using any credentials, but rather relying on the identity of the endpoint. To have this work, replace the following section with the storage account and container name of your choice in [`model/score.py`](model/score.py):
 
-Now deploy the model to the Online Endpoint:
+```python
+endpoint = "https://<your blob account>.blob.core.windows.net"
+container_name = "moe-testing"
+```
+
+Now deploy the model to the Online Endpoint. If your workspace's storage account is behind a VNET, this command needs to be ran from within the VNET.
 
 ```console
 az ml online-deployment create --name deployment --endpoint $endpoint -f endpoint/deployment.yml --all-traffic -g $rg -w $workspace_name

@@ -9,6 +9,7 @@ from azure.storage.blob import BlobClient
 
 
 endpoint = "https://<your blob account>.blob.core.windows.net"
+container_name = "moe-testing"
 credential = ChainedTokenCredential(ManagedIdentityCredential(), AzureCliCredential())
 
 # Automatically generate the swagger interface by providing an data example
@@ -43,7 +44,7 @@ def run(data):
 
         # This code is probably bad, as we do not want to get a new token every time - do not use this in production
         try:
-            blob_client = BlobClient(endpoint, container_name="moe-testing", blob_name=f"{str(uuid.uuid4())}.txt", credential=credential)
+            blob_client = BlobClient(endpoint, container_name=container_name, blob_name=f"{str(uuid.uuid4())}.txt", credential=credential)
             data = str(result)
             blob_client.upload_blob(data)
         except:
